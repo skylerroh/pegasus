@@ -72,7 +72,6 @@ def length_normalization(start, alpha, min_len, max_len, out_of_range_penalty):
 
 
 def beam_search(symbols_to_logits_fn,
-                start,
                 init_seq_BxT,
                 initial_cache_BxU,
                 vocab_size,
@@ -84,7 +83,6 @@ def beam_search(symbols_to_logits_fn,
   Args:
     symbols_to_logits_fn: fn(seq_BxT, cache_BxU, i) -> (logits_BxV, cache_BxU)
     init_seq_BxT: initial sequence ids.
-    start: starting position of beam.
     initial_cache_BxU: dictionary of tensors with shape BxU.
     vocab_size: vocabulary size.
     beam_size: beam size.
@@ -148,7 +146,7 @@ def beam_search(symbols_to_logits_fn,
     ]
 
   # initialize.
-  init_i = tf.constant(start, dtype=int_dtype)
+  init_i = tf.constant(0, dtype=int_dtype)
   init_alive_seq_BxMxT = _expand_to_beam_size(init_seq_BxT, M)
   log_probs_1xM = tf.constant([[0.] + [dtype.min] * (M - 1)], dtype=dtype)
   init_alive_log_probs_BxM = tf.tile(log_probs_1xM, [B, 1])

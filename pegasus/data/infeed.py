@@ -72,6 +72,7 @@ def serving_input_fn(params):
                                      params.length_bucket_size > 0)
 
   inputs = tf.reshape(inputs, [params.batch_size, params.max_input_len])
+  topics = tf.reshape(topics, [params.batch_size, 5])
   features = {"inputs": inputs,
               "topic": topics}
   return tf.estimator.export.ServingInputReceiver(

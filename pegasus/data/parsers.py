@@ -49,12 +49,12 @@ def supervised_strings_parser(vocab_filename,
     """Parser for string dict."""
 
     inputs = parsing_ops.encode(
-        tf.reshape(input_dic["inputs"], [1]), max_input_len, vocab_filename,
+        tf.reshape(tf.strings.join([input_dic["topics"], input_dic["inputs"]], separator=' '), [1]), max_input_len, vocab_filename,
         encoder_type)
 
-    topics = parsing_ops.encode(
-        tf.reshape(input_dic["topics"], [1]), max_topic_length, vocab_filename,
-        encoder_type)
+#     topics = parsing_ops.encode(
+#         tf.reshape(input_dic["topics"], [1]), max_topic_length, vocab_filename,
+#         encoder_type)
 
     targets = parsing_ops.encode(
         tf.reshape(input_dic["targets"], [1]), max_target_len, vocab_filename,
@@ -64,9 +64,10 @@ def supervised_strings_parser(vocab_filename,
                                         length_bucket_max_id)
     if add_task_id:
       inputs = utils.add_task_id(inputs, task_start_id + input_dic["task_id"])
-    return {"inputs": inputs, "topics": topics, "targets": targets}
+    return {"inputs": inputs, "targets": targets}
 
-  shapes = {"inputs": [max_input_len], "topics": [max_topic_length], "targets": [max_target_len]}
+#   shapes = {"inputs": [max_input_len], "topics": [max_topic_length], "targets": [max_target_len]}
+  shapes = {"inputs": [max_input_len], "targets": [max_target_len]}
   return parser, shapes
 
 

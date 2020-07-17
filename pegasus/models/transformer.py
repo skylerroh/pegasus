@@ -65,6 +65,7 @@ class TransformerEncoderDecoderModel(base.BaseModel):
 
   def _encode(self, features, training):
       # B batch, I input, D embedding dim, T target dim
+#     inputs_BxI = tf.concat([features["topics"], features["inputs"]], 1)
     inputs_BxI = features["inputs"]
     inputs_bias_Bx1xI = attention.ids_to_bias(inputs_BxI, self._dtype)
     states_BxIxD = self._embedding_layer(inputs_BxI, True)
@@ -94,10 +95,7 @@ class TransformerEncoderDecoderModel(base.BaseModel):
 
     context = self._encode(features, training)
     self._context = context
-    print(features.keys())
-    print(features["topics"].shape)
-    print(features["targets"].shape)
-    targets_BxT = tf.concat([features["topics"], features["targets"]], 1)
+    targets_BxT = features["targets"]
     bias_1xTxT = attention.upper_triangle_bias(
         tf.shape(targets_BxT)[1], self._dtype)
     states_BxTxD = self._embedding_layer(targets_BxT, True)
@@ -105,7 +103,6 @@ class TransformerEncoderDecoderModel(base.BaseModel):
     states_BxTxD = timing.add_time_signal(states_BxTxD)
     states_BxTxD = self._dropout_fn(states_BxTxD, training)
     with tf.variable_scope(self._decoder_scope_name, reuse=tf.AUTO_REUSE):
-      # put somewhere in here feed subreddit / meta data
       states_BxTxD = transformer_block.stack(self._decoder_layers, training,
                                              states_BxTxD, bias_1xTxT,
                                              context["memory"],
@@ -130,11 +127,47 @@ class TransformerEncoderDecoderModel(base.BaseModel):
         weights=targets_mask_BxT)
     return loss, {"logits": logits_BxTxV}
 
+#   def predict(self, features, max_decode_len, beam_size, **beam_kwargs):
+#     """Predict."""
+#     cache = self._encode(features, False)
+#     B, _, D = cache["memory"].shape
+#     T, V, H = max_decode_len + max_topic_len, self._vocab_size, self._num_heads
+
+#     bias_1xTxT = attention.upper_triangle_bias(T, self._dtype)
+#     for i in range(len(self._decoder_layers)):
+#       cache[str(i)] = {
+#           "k": tf.zeros([B, H, T, D // H], self._dtype),
+#           "v": tf.zeros([B, H, T, D // H], self._dtype)
+#       }
+
+#     def symbols_to_logits_fn(dec_BxT, context, i):
+#       """Decode loop."""
+#       dec_Bx1 = tf.slice(dec_BxT, [0, tf.maximum(tf.cast(0, i.dtype), i - 1)],
+#                          [dec_BxT.shape[0], 1])
+#       bias_1x1xT = tf.slice(bias_1xTxT, [0, i, 0], [1, 1, T])
+#       dec_Bx1xD = self._embedding_layer(dec_Bx1, True)
+#       dec_Bx1xD *= tf.cast(tf.greater(i, 0), self._dtype)
+#       dec_Bx1xD = timing.add_time_signal(dec_Bx1xD, start_index=i)
+#       with tf.variable_scope(self._decoder_scope_name, reuse=tf.AUTO_REUSE):
+#         dec_Bx1xD = transformer_block.stack(self._decoder_layers, False,
+#                                             dec_Bx1xD, bias_1x1xT,
+#                                             context["memory"],
+#                                             context["memory_bias"], context, i)
+#         dec_Bx1xD = contrib_layers.layer_norm(dec_Bx1xD, begin_norm_axis=2)
+#       logits_Bx1xV = self._embedding_layer(dec_Bx1xD, False)
+#       logits_BxV = tf.squeeze(logits_Bx1xV, axis=1)
+#       return logits_BxV
+
+#     decodes_BxT = decoding.left2right_decode(features, symbols_to_logits_fn, cache, B, T,
+#                                              V, beam_size, **beam_kwargs)
+#     return {"outputs": tf.slice(decodes_BxT, [0, max_topic_len], [B, T])}
+
+
   def predict(self, features, max_decode_len, beam_size, **beam_kwargs):
     """Predict."""
     cache = self._encode(features, False)
     B, _, D = cache["memory"].shape
-    T, V, H = max_decode_len + max_topic_len, self._vocab_size, self._num_heads
+    T, V, H = max_decode_len, self._vocab_size, self._num_heads
 
     bias_1xTxT = attention.upper_triangle_bias(T, self._dtype)
     for i in range(len(self._decoder_layers)):
@@ -161,6 +194,6 @@ class TransformerEncoderDecoderModel(base.BaseModel):
       logits_BxV = tf.squeeze(logits_Bx1xV, axis=1)
       return logits_BxV
 
-    decodes_BxT = decoding.left2right_decode(features, symbols_to_logits_fn, cache, B, T,
+    decodes_BxT = decoding.left2right_decode(symbols_to_logits_fn, cache, B, T,
                                              V, beam_size, **beam_kwargs)
-    return {"outputs": tf.slice(decodes_BxT, [0, max_topic_len], [B, T])}
+    return {"outputs": decodes_BxT}

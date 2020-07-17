@@ -168,6 +168,8 @@ def left2right_decode(features,
     length_norm_fn = beam_search.length_normalization(beam_start, beam_alpha,
                                                       beam_min, beam_max, -1e3)
     
+    start = features['topics'].shape[1]
+    
     beams, _ = beam_search.beam_search(
         symbols_to_logits_fn_with_sampling,
         max_topic_len, 

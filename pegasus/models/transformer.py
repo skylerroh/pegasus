@@ -35,6 +35,9 @@ import tensorflow as tf
 from tensorflow.contrib import layers as contrib_layers
 
 
+max_topic_length = 5
+
+
 class TransformerEncoderDecoderModel(base.BaseModel):
   """Transformer encoder+decoder.
 
@@ -91,7 +94,10 @@ class TransformerEncoderDecoderModel(base.BaseModel):
 
     context = self._encode(features, training)
     self._context = context
-    targets_BxT = features["targets"]
+    print(features.keys())
+    print(features["topics"].shape)
+    print(features["targets"].shape)
+    targets_BxT = tf.concat([features["topics"], features["targets"]], 1)
     bias_1xTxT = attention.upper_triangle_bias(
         tf.shape(targets_BxT)[1], self._dtype)
     states_BxTxD = self._embedding_layer(targets_BxT, True)
@@ -107,6 +113,16 @@ class TransformerEncoderDecoderModel(base.BaseModel):
       states_BxTxD = contrib_layers.layer_norm(states_BxTxD, begin_norm_axis=2)
     logits_BxTxV = self._embedding_layer(states_BxTxD, False)
     targets_mask_BxT = tf.cast(tf.greater(targets_BxT, 0), self._dtype)
+    # loss = tf.losses.softmax_cross_entropy(
+    #     tf.one_hot(tf.slice(targets_BxT,
+    #                         [0, max_topic_length],
+    #                         features["targets"].shape),
+    #                self._vocab_size),
+    #     tf.slice(logits_BxTxV,
+    #              [0, max_topic_length, self._vocab_size],
+    #              [features["targets"].shape[0], features["targets"].shape[1], self._vocab_size),
+    #     label_smoothing=self._label_smoothing,
+    #     weights=targets_mask_BxT)
     loss = tf.losses.softmax_cross_entropy(
         tf.one_hot(targets_BxT, self._vocab_size),
         logits_BxTxV,

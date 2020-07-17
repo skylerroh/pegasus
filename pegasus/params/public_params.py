@@ -207,6 +207,21 @@ def reddit_tifu_long_transformer(param_overrides):
       }, param_overrides)
 
 
+@registry.register("reddit_tldr")
+def reddit_tldr(param_overrides):
+  return transformer_params(
+      {
+          "train_pattern": "tfrecord:reddit_small.tfrecord",
+          "dev_pattern": "tfrecord:reddit_small.tfrecord",
+          "test_pattern": "tfrecord:reddit_small.tfrecord",
+          "max_input_len": 512,
+          "max_output_len": 128,
+          "train_steps": 8000,
+          "learning_rate": 0.0001,
+          "batch_size": 8,
+      }, param_overrides)
+
+
 @registry.register("wikihow_all_transformer")
 def wikihow_all_transformer(param_overrides):
   return transformer_params(

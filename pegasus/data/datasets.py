@@ -84,10 +84,12 @@ class FilesDataset(BaseDataset):
       features = tf.io.parse_single_example(
           serialized_example,
           features={
+              "topics": tf.io.FixedLenFeature([], tf.string),
               "inputs": tf.io.FixedLenFeature([], tf.string),
               "targets": tf.io.FixedLenFeature([], tf.string),
           })
       return {
+          "topics": features["topics"],
           "inputs": features["inputs"],
           "targets": features["targets"],
           "supervised": tf.constant(True)

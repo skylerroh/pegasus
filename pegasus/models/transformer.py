@@ -61,6 +61,7 @@ class TransformerEncoderDecoderModel(base.BaseModel):
     self._decoder_scope_name = "decoder"
 
   def _encode(self, features, training):
+      # B batch, I input, D embedding dim, T target dim
     inputs_BxI = features["inputs"]
     inputs_bias_Bx1xI = attention.ids_to_bias(inputs_BxI, self._dtype)
     states_BxIxD = self._embedding_layer(inputs_BxI, True)
@@ -98,6 +99,7 @@ class TransformerEncoderDecoderModel(base.BaseModel):
     states_BxTxD = timing.add_time_signal(states_BxTxD)
     states_BxTxD = self._dropout_fn(states_BxTxD, training)
     with tf.variable_scope(self._decoder_scope_name, reuse=tf.AUTO_REUSE):
+      # put somewhere in here feed subreddit / meta data
       states_BxTxD = transformer_block.stack(self._decoder_layers, training,
                                              states_BxTxD, bias_1xTxT,
                                              context["memory"],

@@ -227,7 +227,7 @@ def reddit_tldr_subreddit_samples(param_overrides):
   return transformer_params(
       {
           "train_pattern": "tfrecord:subreddits_data/subreddit_*_train_1000.tfrecord",
-          "dev_pattern": "tfrecord:subreddits_data/subreddit_*_eval_1000.tfrecord",
+          "dev_pattern": "tfrecord:subreddits_data/subreddit_*_eval_200.tfrecord",
           "test_pattern": "tfrecord:subreddits_data/subreddit_*_test_1000.tfrecord",
           "max_input_len": 512,
           "max_output_len": 128,

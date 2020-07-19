@@ -80,13 +80,28 @@ def main(_):
   else:
     train_steps_list = [params.train_steps]
   for train_steps in train_steps_list:
-    estimator.train(
-        input_fn=infeed.get_input_fn(
-            params.parser,
-            params.train_pattern,
-            tf.estimator.ModeKeys.TRAIN,
-            parallelism=FLAGS.train_infeed_parallelism),
-        max_steps=train_steps)
+    train_spec = tf.estimator.TrainSpec(
+      input_fn=infeed.get_input_fn(
+          params.parser,
+          params.train_pattern,
+          tf.estimator.ModeKeys.TRAIN,
+          parallelism=FLAGS.train_infeed_parallelism),
+      max_steps=train_steps)
+    eval_spec = tf.estimator.EvalSpec(
+      input_fn=infeed.get_input_fn(
+          params.parser,
+          params.eval_pattern,
+          tf.estimator.ModeKeys.EVAL,
+          parallelism=FLAGS.train_infeed_parallelism))
+
+    estimator.train_and_evaluate(estimator, train_spec, eval_spec)
+    # estimator.train(
+    #     input_fn=infeed.get_input_fn(
+    #         params.parser,
+    #         params.train_pattern,
+    #         tf.estimator.ModeKeys.TRAIN,
+    #         parallelism=FLAGS.train_infeed_parallelism),
+    #     max_steps=train_steps)
 
 
 if __name__ == "__main__":

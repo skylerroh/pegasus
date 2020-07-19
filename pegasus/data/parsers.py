@@ -48,8 +48,13 @@ def supervised_strings_parser(vocab_filename,
   def parser(input_dic):
     """Parser for string dict."""
 
+    if "topics" in input_dic:
+        input_str_tensor = tf.strings.join([input_dic["topics"], input_dic["inputs"]], separator=': ')
+    else:
+        input_str_tensor = input_dic["inputs"]
+
     inputs = parsing_ops.encode(
-        tf.reshape(tf.strings.join([input_dic["topics"], input_dic["inputs"]], separator=' '), [1]), max_input_len, vocab_filename,
+        tf.reshape(input_str_tensor, [1]), max_input_len, vocab_filename,
         encoder_type)
 
 #     topics = parsing_ops.encode(

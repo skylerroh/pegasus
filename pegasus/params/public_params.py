@@ -223,7 +223,7 @@ def reddit_tldr(param_overrides):
 
 
 @registry.register("reddit_tldr_subreddit_samples")
-def reddit_tldr(param_overrides):
+def reddit_tldr_subreddit_samples(param_overrides):
   return transformer_params(
       {
           "train_pattern": "tfrecord:subreddits_data/subreddit_*_train_1000.tfrecord",
@@ -234,6 +234,7 @@ def reddit_tldr(param_overrides):
           "train_steps": 12500,
           "learning_rate": 0.0001,
           "batch_size": 8,
+          "eval_steps":20
       }, param_overrides)
 
 

@@ -233,8 +233,7 @@ def reddit_tldr_subreddit_samples(param_overrides):
           "max_output_len": 128,
           "train_steps": 12500,
           "learning_rate": 0.0001,
-          "batch_size": 8,
-          "eval_steps":20
+          "batch_size": 8
       }, param_overrides)
 
 

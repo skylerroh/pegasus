@@ -30,7 +30,7 @@ _NEWLINE_SYMBOL = "<n>"
 
 
 def encode(text: tf.Tensor, max_len: int, vocab_filename: str,
-           encoder_type: str, text2: tf.Tensor = None):
+           encoder_type: str):
   """EncodeOp."""
   if encoder_type not in ["sentencepiece", "sentencepiece_newline"]:
     raise ValueError("Unsupported encoder type: %s" % encoder_type)
@@ -42,10 +42,6 @@ def encode(text: tf.Tensor, max_len: int, vocab_filename: str,
   ids = tokenizer.tokenize(text)
   eos = tf.ragged.constant([[1]] * batch_size)
   ids = tf.concat([ids, eos], axis=1)
-  if text2:
-    ids2 = tokenizer.tokenize(text2)
-    ids2 = tf.concat([ids2, eos], axis=1)
-    ids = tf.concat([ids, ids2], axis=1)
   ids = ids.to_tensor(default_value=0)
   ids = ids[:, :max_len]
   pad = max_len - tf.shape(ids)[1]

@@ -39,10 +39,10 @@ flags.DEFINE_integer("train_infeed_parallelism", 32,
 flags.DEFINE_string("train_init_checkpoint", None,
                     "Initialize model or partial model from this checkpoint.")
 flags.DEFINE_integer("train_warmup_steps", 10000, "Number of steps to warmup.")
-flags.DEFINE_integer("save_checkpoints_steps", 1000,
+flags.DEFINE_integer("save_checkpoints_steps", 2000,
                      "Save checkpoints every this many steps.")
 flags.DEFINE_integer(
-    "keep_checkpoint_max", 5,
+    "keep_checkpoint_max", 14,
     "The maximum number of recent checkpoint files to keep. "
     "As new files are created, older files are deleted.")
 flags.DEFINE_string("train_steps_overrides", "",

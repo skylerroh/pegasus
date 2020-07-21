@@ -49,7 +49,7 @@ def supervised_strings_parser(vocab_filename,
     """Parser for string dict."""
 
     if "topics" in input_dic:
-        input_str_tensor = tf.strings.join([input_dic["topics"], input_dic["inputs"]], separator='\n')
+        input_str_tensor = tf.strings.join([input_dic["topics"], input_dic["inputs"]], separator=': ')
     else:
         input_str_tensor = input_dic["inputs"]
 

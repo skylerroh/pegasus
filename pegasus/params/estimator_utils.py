@@ -123,7 +123,17 @@ def _estimator_model_fn(use_tpu, model_params, model_dir,
           beta1=0.0)
       if use_tpu:
         optimizer = tpu_optimizer.CrossShardOptimizer(optimizer)
-      train_op = optimizer.minimize(loss, global_step=global_step)
+
+      tvars = tf.trainable_variables()
+      to_train = []
+      for var in tvars:
+          if any([var.name.startswith('decoder/layer_{}/'.format(i)) for i in range(8)]) or \
+                  any([var.name.startswith('encoder/layer_{}/'.format(i)) for i in range(8)]):
+              pass
+          else:
+              to_train.append(var)
+
+      train_op = optimizer.minimize(loss, global_step=global_step, var_list=to_train)
 
       return tpu_estimator.TPUEstimatorSpec(
           mode=mode,
@@ -209,6 +219,7 @@ def _load_vars_from_checkpoint(use_tpu, init_checkpoint):
     init_string = ""
     if var.name in initialized_variable_names:
       init_string = ", *INIT_FROM_CKPT*"
+
     logging.info("  name = %s, shape = %s%s", var.name, var.shape, init_string)
   return scaffold_fn
 

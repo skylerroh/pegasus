@@ -33,7 +33,7 @@ from pegasus.layers import transformer_block
 from pegasus.models import base
 import tensorflow as tf
 from tensorflow.contrib import layers as contrib_layers
-
+from absl import logging
 
 max_topic_len = 5
 
@@ -56,10 +56,6 @@ class TransformerEncoderDecoderModel(base.BaseModel):
         hidden_size, filter_size, num_heads, dropout)
     self._encoder_layers = [block_fn() for _ in range(num_encoder_layers)]
     self._decoder_layers = [block_fn() for _ in range(num_decoder_layers)]
-    for i, layer in enumerate(self._encoder_layers[:num_encoder_layers//2]):
-        layer._trainable = False
-    for i, layer in enumerate(self._decoder_layers[:num_decoder_layers//2]):
-        layer._trainable = False
     self._dropout_fn = lambda x, training: tf.compat.v2.nn.dropout(
         x, dropout, noise_shape=[x.shape[0], 1, x.shape[2]]) if training else x
     self._vocab_size = vocab_size

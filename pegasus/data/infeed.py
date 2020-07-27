@@ -63,7 +63,17 @@ def serving_input_fn(params):
   inputs = public_parsing_ops.encode(inputs_ph, params.max_input_len,
                                      params.vocab_filename, params.encoder_type,
                                      params.length_bucket_size > 0)
+
+  topics_ph = tf.placeholder(
+      dtype=tf.string, shape=[params.batch_size], name="topics")
+
+  topics = public_parsing_ops.encode(topics_ph, 5,  # params.max_input_len,
+                                     params.vocab_filename, params.encoder_type,
+                                     params.length_bucket_size > 0)
+
   inputs = tf.reshape(inputs, [params.batch_size, params.max_input_len])
-  features = {"inputs": inputs}
+  topics = tf.reshape(topics, [params.batch_size, 5])
+  features = {"inputs": inputs,
+              "topic": topics}
   return tf.estimator.export.ServingInputReceiver(
-      features=features, receiver_tensors=inputs_ph)
+      features=features, receiver_tensors=[inputs_ph, topics_ph])

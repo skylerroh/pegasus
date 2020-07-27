@@ -222,21 +222,6 @@ def reddit_tldr(param_overrides):
       }, param_overrides)
 
 
-@registry.register("reddit_tldr_subreddit_samples")
-def reddit_tldr_subreddit_samples(param_overrides):
-  return transformer_params(
-      {
-          "train_pattern": "tfrecord:subreddits_data/top50_100k.tfrecord",
-          "dev_pattern": "tfrecord:subreddits_data/subreddit_*_eval_100.tfrecord",
-          "test_pattern": "tfrecord:subreddits_data/subreddit_*_test_100.tfrecord",
-          "max_input_len": 512,
-          "max_output_len": 128,
-          "train_steps": 12500,
-          "learning_rate": 0.0001,
-          "batch_size": 8
-      }, param_overrides)
-
-
 @registry.register("wikihow_all_transformer")
 def wikihow_all_transformer(param_overrides):
   return transformer_params(

@@ -17,6 +17,7 @@
 # pylint: disable=invalid-name
 
 import tensorflow as tf
+import sys
 
 from pegasus.layers import beam_search
 
@@ -91,6 +92,176 @@ def inplace_update_i(tensor_BxL, updates_B, i):
   return tf.tensor_scatter_nd_update(tensor_BxL, indices_Bx2, updates_B)
 
 
+# def left2right_decode(features, 
+#                       symbols_to_logits_fn,
+#                       context_BxU_dict,
+#                       batch_size,
+#                       max_topic_len,
+#                       max_decode_len,
+#                       vocab_size,
+#                       beam_size=1,
+#                       beam_start=5,
+#                       beam_alpha=0.6,
+#                       beam_min=0,
+#                       beam_max=-1,
+#                       temperature=0.0,
+#                       top_k=0,
+#                       top_p=0.0,
+#                       eos_id=EOS_ID):
+#   """left to right decode.
+
+#   Notations:
+#     B: batch_size, V: vocab_size, T: decode_len, U: undefined dimensions
+
+#   Args:
+#     symbols_to_logits_fn: logits = fn(decodes, context, i). Shoud take
+#       [batch_size, decoded_ids] and return [batch_size, vocab_size].
+#     context_BxU_dict: dict of Tensors.
+#     batch_size: int, decode batch size.
+#     max_decode_len: int, maximum number of steps to decode.
+#     vocab_size: int, output vocab size.
+#     beam_size: Number of beams to decode.
+#     beam_start: start length for scaling, default to 5.
+#     beam_alpha: Length penalty for decoding. Should be between 0 (shorter) and 1
+#       (longer), default to 0.6.
+#     beam_min: Minimum beam search lengths.
+#     beam_max: Maximum beam search lengths. Set -1 to use unlimited.
+#     temperature: Sampling temp for next token (0 for argmax), default to 0.0.
+#     top_k: Number of top symbols to consider at each time step, default to 0
+#       (consider all symbols).
+#     top_p: Nucleus sampling probability.
+#     eos_id: end of token id, default to 1.
+
+#   Returns:
+#     decodes: Tensor[batch, decode_len]
+#   """
+#   dtype = tf.int64
+#   # When beam_size=1, beam_search does not behave exactly like greedy.
+#   # This is due to using 2 * beam_size in grow_topk, and keep the top beam_size
+#   # ones that haven't reached EOS into alive.
+#   # In this case, alpha value for length penalty will take effect.
+#   if beam_size == 1:
+
+#     def decode_loop(i, decodes_BxT, cache_BxU_dict):
+#       logits_BxV = symbols_to_logits_fn(decodes_BxT, cache_BxU_dict, i)
+#       logits_BxV = process_logits(logits_BxV, top_k, top_p, temperature)
+#       decodes_BxT = inplace_update_i(decodes_BxT, tf.argmax(logits_BxV, -1), i)
+#       return i + 1, decodes_BxT, cache_BxU_dict
+
+#     def loop_cond(i, decodes_BxT, unused_cache_BxU_dict):
+#       finished_B = tf.reduce_any(tf.equal(decodes_BxT, EOS_ID), axis=1)
+#       return tf.logical_and(i < (max_topic_len + max_decode_len),
+#                             tf.logical_not(tf.reduce_all(finished_B)))
+
+#     init_dec_BxT = tf.concat([features['topics'], tf.zeros([batch_size, max_decode_len], dtype=dtype)], 1)
+#     _, decodes, _ = tf.while_loop(
+#         loop_cond, decode_loop,
+#         [tf.constant(0, dtype=dtype), init_dec_BxT, context_BxU_dict])
+#     return decodes
+
+#   else:
+
+#     def symbols_to_logits_fn_with_sampling(decodes_BxT, states_BxU_dict, i):
+#       logits_BxV = symbols_to_logits_fn(decodes_BxT, states_BxU_dict, i)
+#       logits_BxV = process_logits(logits_BxV, top_k, top_p, temperature)
+#       return logits_BxV, states_BxU_dict
+
+#     length_norm_fn = beam_search.length_normalization(beam_start, beam_alpha,
+#                                                       beam_min, beam_max, -1e3)
+    
+#     beams, _ = beam_search.beam_search(
+#         symbols_to_logits_fn_with_sampling,
+#         max_topic_len, 
+#         tf.concat([tf.cast(features['topics'], dtype=tf.int32), tf.zeros([batch_size, max_decode_len], dtype=tf.int32)], 1),
+#         context_BxU_dict, vocab_size, beam_size, length_norm_fn, eos_id)
+#     return tf.cast(beams[:, 0, :], dtype)
+
+# def left2right_decode(features, 
+#                       symbols_to_logits_fn,
+#                       context_BxU_dict,
+#                       batch_size,
+#                       max_topic_len,
+#                       max_decode_len,
+#                       vocab_size,
+#                       beam_size=1,
+#                       beam_start=5,
+#                       beam_alpha=0.6,
+#                       beam_min=0,
+#                       beam_max=-1,
+#                       temperature=0.0,
+#                       top_k=0,
+#                       top_p=0.0,
+#                       eos_id=EOS_ID):
+#   """left to right decode.
+
+#   Notations:
+#     B: batch_size, V: vocab_size, T: decode_len, U: undefined dimensions
+
+#   Args:
+#     symbols_to_logits_fn: logits = fn(decodes, context, i). Shoud take
+#       [batch_size, decoded_ids] and return [batch_size, vocab_size].
+#     context_BxU_dict: dict of Tensors.
+#     batch_size: int, decode batch size.
+#     max_decode_len: int, maximum number of steps to decode.
+#     vocab_size: int, output vocab size.
+#     beam_size: Number of beams to decode.
+#     beam_start: start length for scaling, default to 5.
+#     beam_alpha: Length penalty for decoding. Should be between 0 (shorter) and 1
+#       (longer), default to 0.6.
+#     beam_min: Minimum beam search lengths.
+#     beam_max: Maximum beam search lengths. Set -1 to use unlimited.
+#     temperature: Sampling temp for next token (0 for argmax), default to 0.0.
+#     top_k: Number of top symbols to consider at each time step, default to 0
+#       (consider all symbols).
+#     top_p: Nucleus sampling probability.
+#     eos_id: end of token id, default to 1.
+
+#   Returns:
+#     decodes: Tensor[batch, decode_len]
+#   """
+#   dtype = tf.int64
+#   # When beam_size=1, beam_search does not behave exactly like greedy.
+#   # This is due to using 2 * beam_size in grow_topk, and keep the top beam_size
+#   # ones that haven't reached EOS into alive.
+#   # In this case, alpha value for length penalty will take effect.
+#   if beam_size == 1:
+
+#     def decode_loop(i, decodes_BxT, cache_BxU_dict):
+#       logits_BxV = symbols_to_logits_fn(decodes_BxT, cache_BxU_dict, i)
+#       logits_BxV = process_logits(logits_BxV, top_k, top_p, temperature)
+#       decodes_BxT = tf.cond(i >= max_topic_len, lambda: inplace_update_i(decodes_BxT, tf.argmax(logits_BxV, -1), i), lambda: decodes_BxT)
+#       print(decodes_BxT)
+#       return i + 1, decodes_BxT, cache_BxU_dict
+
+#     def loop_cond(i, decodes_BxT, unused_cache_BxU_dict):
+# #       eos_B = tf.reduce_sum(tf.cast(tf.equal(decodes_BxT, EOS_ID), tf.int32), axis=1)
+# #       finished_B = tf.equal(eos_B, tf.constant(2, shape=eos_B.shape))
+#       finished_B = tf.reduce_any(tf.equal(tf.slice(decodes_BxT, [0, max_topic_len], [decodes_BxT.shape[0], decodes_BxT.shape[1]-max_topic_len]), EOS_ID), axis=1)  
+#       return tf.logical_and(i < max_decode_len,
+#                             tf.logical_not(tf.reduce_all(finished_B)))
+
+# #     tf.print("tensors:", features['topics'], output_stream=sys.stdout)
+#     init_dec_BxT = tf.concat([features['topics'], tf.zeros([batch_size, max_decode_len], dtype=dtype)], 1)
+#     _, decodes, _ = tf.while_loop(
+#         loop_cond, decode_loop,
+#         [tf.constant(0, dtype=dtype), init_dec_BxT, context_BxU_dict])
+#     return decodes
+
+#   else:
+
+#     def symbols_to_logits_fn_with_sampling(decodes_BxT, states_BxU_dict, i):
+#       logits_BxV = symbols_to_logits_fn(decodes_BxT, states_BxU_dict, i)
+#       logits_BxV = process_logits(logits_BxV, top_k, top_p, temperature)
+#       return logits_BxV, states_BxU_dict
+
+#     length_norm_fn = beam_search.length_normalization(beam_start, beam_alpha,
+#                                                       beam_min, beam_max, -1e3)
+#     beams, _ = beam_search.beam_search(
+#         symbols_to_logits_fn_with_sampling,
+#         tf.zeros([batch_size, max_decode_len], dtype=tf.int32),
+#         context_BxU_dict, vocab_size, beam_size, length_norm_fn, eos_id)
+#     return tf.cast(beams[:, 0, :], dtype)
+
 def left2right_decode(symbols_to_logits_fn,
                       context_BxU_dict,
                       batch_size,
@@ -106,10 +277,8 @@ def left2right_decode(symbols_to_logits_fn,
                       top_p=0.0,
                       eos_id=EOS_ID):
   """left to right decode.
-
   Notations:
     B: batch_size, V: vocab_size, T: decode_len, U: undefined dimensions
-
   Args:
     symbols_to_logits_fn: logits = fn(decodes, context, i). Shoud take
       [batch_size, decoded_ids] and return [batch_size, vocab_size].
@@ -128,7 +297,6 @@ def left2right_decode(symbols_to_logits_fn,
       (consider all symbols).
     top_p: Nucleus sampling probability.
     eos_id: end of token id, default to 1.
-
   Returns:
     decodes: Tensor[batch, decode_len]
   """

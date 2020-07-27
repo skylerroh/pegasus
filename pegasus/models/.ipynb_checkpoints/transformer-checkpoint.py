@@ -33,7 +33,7 @@ from pegasus.layers import transformer_block
 from pegasus.models import base
 import tensorflow as tf
 from tensorflow.contrib import layers as contrib_layers
-from absl import logging
+
 
 max_topic_len = 5
 
@@ -65,7 +65,6 @@ class TransformerEncoderDecoderModel(base.BaseModel):
 
   def _encode(self, features, training):
       # B batch, I input, D embedding dim, T target dim
-#     inputs_BxI = tf.concat([features["topics"], features["inputs"]], 1)
     inputs_BxI = features["inputs"]
     inputs_bias_Bx1xI = attention.ids_to_bias(inputs_BxI, self._dtype)
     states_BxIxD = self._embedding_layer(inputs_BxI, True)
@@ -95,7 +94,10 @@ class TransformerEncoderDecoderModel(base.BaseModel):
 
     context = self._encode(features, training)
     self._context = context
-    targets_BxT = features["targets"]
+    print(features.keys())
+    print(features["topics"].shape)
+    print(features["targets"].shape)
+    targets_BxT = tf.concat([features["topics"], features["targets"]], 1)
     bias_1xTxT = attention.upper_triangle_bias(
         tf.shape(targets_BxT)[1], self._dtype)
     states_BxTxD = self._embedding_layer(targets_BxT, True)
@@ -103,6 +105,7 @@ class TransformerEncoderDecoderModel(base.BaseModel):
     states_BxTxD = timing.add_time_signal(states_BxTxD)
     states_BxTxD = self._dropout_fn(states_BxTxD, training)
     with tf.variable_scope(self._decoder_scope_name, reuse=tf.AUTO_REUSE):
+      # put somewhere in here feed subreddit / meta data
       states_BxTxD = transformer_block.stack(self._decoder_layers, training,
                                              states_BxTxD, bias_1xTxT,
                                              context["memory"],
@@ -127,12 +130,11 @@ class TransformerEncoderDecoderModel(base.BaseModel):
         weights=targets_mask_BxT)
     return loss, {"logits": logits_BxTxV}
 
-
   def predict(self, features, max_decode_len, beam_size, **beam_kwargs):
     """Predict."""
     cache = self._encode(features, False)
     B, _, D = cache["memory"].shape
-    T, V, H = max_decode_len, self._vocab_size, self._num_heads
+    T, V, H = max_decode_len + max_topic_len, self._vocab_size, self._num_heads
 
     bias_1xTxT = attention.upper_triangle_bias(T, self._dtype)
     for i in range(len(self._decoder_layers)):
@@ -159,6 +161,6 @@ class TransformerEncoderDecoderModel(base.BaseModel):
       logits_BxV = tf.squeeze(logits_Bx1xV, axis=1)
       return logits_BxV
 
-    decodes_BxT = decoding.left2right_decode(symbols_to_logits_fn, cache, B, T,
+    decodes_BxT = decoding.left2right_decode(features, symbols_to_logits_fn, cache, B, T,
                                              V, beam_size, **beam_kwargs)
-    return {"outputs": decodes_BxT}
+    return {"outputs": tf.slice(decodes_BxT, [0, max_topic_len], [B, T])}

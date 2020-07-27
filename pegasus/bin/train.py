@@ -39,10 +39,10 @@ flags.DEFINE_integer("train_infeed_parallelism", 32,
 flags.DEFINE_string("train_init_checkpoint", None,
                     "Initialize model or partial model from this checkpoint.")
 flags.DEFINE_integer("train_warmup_steps", 10000, "Number of steps to warmup.")
-flags.DEFINE_integer("save_checkpoints_steps", 1000,
+flags.DEFINE_integer("save_checkpoints_steps", 6250,
                      "Save checkpoints every this many steps.")
 flags.DEFINE_integer(
-    "keep_checkpoint_max", 5,
+    "keep_checkpoint_max", 14,
     "The maximum number of recent checkpoint files to keep. "
     "As new files are created, older files are deleted.")
 flags.DEFINE_string("train_steps_overrides", "",
@@ -80,6 +80,21 @@ def main(_):
   else:
     train_steps_list = [params.train_steps]
   for train_steps in train_steps_list:
+    # train_spec = tf.estimator.TrainSpec(
+    #   input_fn=infeed.get_input_fn(
+    #       params.parser,
+    #       params.train_pattern,
+    #       tf.estimator.ModeKeys.TRAIN,
+    #       parallelism=FLAGS.train_infeed_parallelism),
+    #   max_steps=train_steps)
+    # eval_spec = tf.estimator.EvalSpec(
+    #   input_fn=infeed.get_input_fn(
+    #       params.parser,
+    #       params.dev_pattern,
+    #       tf.estimator.ModeKeys.EVAL,
+    #       parallelism=FLAGS.train_infeed_parallelism))
+    #
+    # estimator.train_and_evaluate(estimator, train_spec, eval_spec)
     estimator.train(
         input_fn=infeed.get_input_fn(
             params.parser,

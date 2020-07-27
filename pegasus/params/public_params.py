@@ -226,9 +226,9 @@ def reddit_tldr(param_overrides):
 def reddit_tldr_subreddit_samples(param_overrides):
   return transformer_params(
       {
-          "train_pattern": "tfrecord:subreddits_data/subreddit_*_train_1000.tfrecord",
-          "dev_pattern": "tfrecord:subreddits_data/subreddit_*_eval_200.tfrecord",
-          "test_pattern": "tfrecord:subreddits_data/subreddit_*_test_1000.tfrecord",
+          "train_pattern": "tfrecord:subreddits_data/top50_100k.tfrecord",
+          "dev_pattern": "tfrecord:subreddits_data/subreddit_*_eval_100.tfrecord",
+          "test_pattern": "tfrecord:subreddits_data/subreddit_*_test_100.tfrecord",
           "max_input_len": 512,
           "max_output_len": 128,
           "train_steps": 12500,

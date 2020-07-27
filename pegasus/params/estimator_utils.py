@@ -124,16 +124,17 @@ def _estimator_model_fn(use_tpu, model_params, model_dir,
       if use_tpu:
         optimizer = tpu_optimizer.CrossShardOptimizer(optimizer)
 
-      tvars = tf.trainable_variables()
-      to_train = []
-      for var in tvars:
-          if any([var.name.startswith('decoder/layer_{}/'.format(i)) for i in range(8)]) or \
-                  any([var.name.startswith('encoder/layer_{}/'.format(i)) for i in range(8)]):
-              pass
-          else:
-              to_train.append(var)
+      # for freezing some layer weights in finetuning  
+      # tvars = tf.trainable_variables()
+      # to_train = []
+      # for var in tvars:
+      #     if any([var.name.startswith('decoder/layer_{}/'.format(i)) for i in range(8)]) or \
+      #             any([var.name.startswith('encoder/layer_{}/'.format(i)) for i in range(8)]):
+      #         pass
+      #     else:
+      #         to_train.append(var)
 
-      train_op = optimizer.minimize(loss, global_step=global_step, var_list=to_train)
+      train_op = optimizer.minimize(loss, global_step=global_step) #, var_list=to_train)
 
       return tpu_estimator.TPUEstimatorSpec(
           mode=mode,

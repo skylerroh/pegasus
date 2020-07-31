@@ -226,9 +226,39 @@ def reddit_tldr(param_overrides):
 def reddit_tldr_subreddit_samples(param_overrides):
   return transformer_params(
       {
-          "train_pattern": "tfrecord:subreddits_data/top50_100k.tfrecord",
-          "dev_pattern": "tfrecord:subreddits_data/subreddit_*_eval_100.tfrecord",
-          "test_pattern": "tfrecord:subreddits_data/subreddit_*_test_100.tfrecord",
+          "train_pattern": "tfrecord:data/train_top50_100k.tfrecord",
+          "dev_pattern": "tfrecord:data/eval_top50_5k.tfrecord",
+          "test_pattern": "tfrecord:data/subreddit_*_test_100.tfrecord",
+          "max_input_len": 512,
+          "max_output_len": 128,
+          "train_steps": 12500,
+          "learning_rate": 0.0001,
+          "batch_size": 8
+      }, param_overrides)
+
+
+@registry.register("reddit_tldr_subreddit_samples_extracted10")
+def reddit_tldr_subreddit_samples_extracted10(param_overrides):
+  return transformer_params(
+      {
+          "train_pattern": "tfrecord:data/train_top50_100k_extracted_transformer_top10.tfrecord",
+          "dev_pattern": "tfrecord:data/eval_top50_5k_extracted_transformer_top10.tfrecord",
+          "test_pattern": "tfrecord:data/subreddit_*_test_100.tfrecord",
+          "max_input_len": 512,
+          "max_output_len": 128,
+          "train_steps": 12500,
+          "learning_rate": 0.0001,
+          "batch_size": 8
+      }, param_overrides)
+
+
+@registry.register("reddit_tldr_subreddit_samples_extracted20")
+def reddit_tldr_subreddit_samples_extracted10(param_overrides):
+  return transformer_params(
+      {
+          "train_pattern": "tfrecord:data/train_top50_100k_extracted_transformer_top20.tfrecord",
+          "dev_pattern": "tfrecord:data/eval_top50_5k_extracted_transformer_top20.tfrecord",
+          "test_pattern": "tfrecord:data/subreddit_*_test_100.tfrecord",
           "max_input_len": 512,
           "max_output_len": 128,
           "train_steps": 12500,
